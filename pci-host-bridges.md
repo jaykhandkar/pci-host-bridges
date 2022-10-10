@@ -12,14 +12,20 @@ usually has an integrated PCIe root complex these days), an interesting set of p
  are allocated to which host bridge.
  
  The first restriction applies only when both host bridges implement their PCI Configuration Address/Data or the base address of their enhanced 
- configuration mechanism at the same address. But I haven't come accross a system yet that actually implements them at different addresses yet.
+ configuration mechanism at the same address. But I haven't come accross a system yet that actually implements them at different addresses.
  Initialising the system properly while keeping these restrictions in mind is the job of the firmware (at least on x86). I was curious about how exactly
  this is done and wanted to see it in action with an actual system. I didn't get too far with modern PCIe systems. You might find a register here and
  there that is relevant in the datasheets that Intel provides for its high end Xeon processors that are used in multi socket systems, but they will leave
- you with more questions than before. I also found a paper discussing address decoding on Xeon CPUs, but it focused more on DRAM and not PCIe.
+ you with more questions than before. I also found a paper discussing address decoding on Xeon CPUs, but it focused more on DRAM and not PCIe. The thing
+ is, address decoding on modern server level systems is very complex. In old PCI based Pentium systems, all processors interfaced with the memory 
+ controller on the chipset through a common front side bus. Today, you have memory controllers integrated into the processor package, requiring other
+ solutions based on more complex topologies such as rings and meshes, such as Intel's QPI (Quick Path Interconnect) and UPI (Ultra Path Interconnect).
+ To make things even more complex, each processor package also has a PCIe root complex and a separate logical PCI bus for configuration purposes. The
+ result is that decoding information from whatever little documentation Intel provides for these systems is next to impossible.
  
- By contrast, I found a relatively thorough description in the datasheet for Intel's old (as old as 1996) 450 KX/GX "PCIset" chipset. This chipset supports
- upto four Pentium Pro processors, two PCI host bridges (the GX variant) and two memory controllers:
+ By contrast, it is quite simple to understand old multi socket PCI based Pentium systems. I found a relatively thorough description of the exact aspects 
+ discussed above in the datasheet for Intel's old (as old as 1996) 450 KX/GX "PCIset" chipset. This chipset supports upto four Pentium Pro processors, two 
+ PCI host bridges (the GX variant) and two memory controllers:
  
  ![pciset](https://user-images.githubusercontent.com/23404671/194386857-78baec3d-e721-4a73-a5e7-56ac910ed96b.png)
 
