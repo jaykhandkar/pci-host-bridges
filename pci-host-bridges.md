@@ -38,3 +38,19 @@ the hierarchy below a PCI bridge can begin with bus zero. For example, on reset,
 compatibility PB since it has a PCI to ISA bridge below it, is assigned a device number of 25, wehreas the other PB, referred to as the Auxiliary PB is
 assigned a device number of 26. Here is a description of how the two bridges behave after reset and after proper configuation - 
 
+ - Firstly, both host bridges implement a register to change the bus number on their secondary side and the subordinate bus number for the buses below
+ them:
+ 
+
+![450gx-pbusnum](https://user-images.githubusercontent.com/23404671/195123003-8a39f54d-ef2a-46b9-b427-ad6d9f054a72.png)
+![450gx-subbusnum](https://user-images.githubusercontent.com/23404671/195123020-54e60c86-7b04-40c4-9358-db8e20388b0b.png)
+
+ - At reset, both of these values are zero. This might not make sense at first because you might think both bridges will respond to configuration
+ accesses to bus number zero. However, only the compatibility PB acts as the response agent for the transaction. If the device number is greater than 15
+ and matches its own device number, it responds to the transaction itself. The auxiliary PB simply snarfs the data being written to the configuration
+ address register, and if the bus number is zero with the device number matching its own, it will respond to the transaction instead. If the device number
+ is zero, it is the coompatibility PB that generates a configuration cycle on the PCI bus behind it. In this way, there is a unique responder to each type
+ of configuration access on reset.
+ - Once the firmware has discovered all the devices and buses behind the compatibility PB, it will set the subordinate bus number for the compatibility 
+ PB and the primary bus number for the auxiliary PB, which will cause the auxiliary PB to start responding to configuration accesses targeted to 
+ devices with device number below 15, thus enabling firmware to discover all the devices and buses behind the auxiliary PB.
