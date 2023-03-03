@@ -61,3 +61,23 @@ assigned a device number of 26. Here is a description of how the two bridges beh
  - Once the firmware has discovered all the devices and buses behind the compatibility PB, it will set the subordinate bus number for the compatibility
  PB and the primary bus number for the auxiliary PB, which will cause the auxiliary PB to start responding to configuration accesses targeted to
  devices with device number below 15, thus enabling firmware to discover all the devices and buses behind the auxiliary PB.
+ 
+ After firmware allocates bus numbers, operating systems/bootloaders can discover PCI devices normally.
+ 
+ ## Memory and IO Regions
+ 
+ In systems with a single host bridge/root complex, the address space that is 'left over'/ not decoded by any other devices is allocated to the PCI/PCIe
+ bus. For example, the region between the last address allocated to DRAM below 4G to 4G, excluding the space allocated for the IOAPIC registers,
+ or the region between the last address allocated to DRAM and the very top of the physical address space (called 'High MMIO'). 
+ In systems with multiple host bridges though, specific regions have to be allocated to each host bridge. In the 82454GX host bridge, specific regions
+ can be programmed to be positively decoded to PCI:
+ 
+![pci-hb-memgap1](https://user-images.githubusercontent.com/23404671/222790642-b1b0b411-5d92-4266-9dd2-4bb980535641.png)
+![pci-hb-memgap](https://user-images.githubusercontent.com/23404671/222790712-6560dd99-0061-4392-8fb5-b4b5fd26fc64.png)
+
+These ranges are disabled by default and have to be programmed. In addition, the compatibility PB decodes all addresses from the top of system memory
+to 64G, if enabled:
+
+![pci-hb-tsm](https://user-images.githubusercontent.com/23404671/222792574-2b1916b0-5a4f-47a0-be16-d24a88b372c4.png)
+
+There are similar registers to configure I/O space regions.
