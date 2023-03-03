@@ -81,3 +81,36 @@ to 64G, if enabled:
 ![pci-hb-tsm](https://user-images.githubusercontent.com/23404671/222792574-2b1916b0-5a4f-47a0-be16-d24a88b372c4.png)
 
 There are similar registers to configure I/O space regions.
+
+## What is a PCI device number really?
+
+How are PCI deveces assigned device numbers? Firstly, bus/device/function numbers matter only during configuration transactions. The PCI specification
+defines the ```IDSEL``` signal to select devices during configuration transactions. When a PCI device sees its ```IDSEL``` signal asserted during a
+configuration transaction (the command is configuration read/write on ```C/BE[3:0]```), it knows that it is the target of the transaction. If it is,
+it decodes the following information about the transaction from the ```AD``` signals:
+
+ - ```AD[1:0]``` indicates the type of the transaction. A value of 00 indicates type 0, a transaction targeting a device on this bus.
+ - ```AD[7:2]``` indicates which dword of the configuration space is being accessed.
+ - ```AD[10:8]``` selects one of 8 functions in the device.
+ - ```AD[31:11]``` are reserved and are not decoded by the devices.
+
+The last point lends itself to an easy way to implement the IDSEL signal. The host bridge can simply assert one of the twenty ```AD[31:11]``` lines for 
+a specific device number. The board designer can then connect IDSEL to that line on the PCI slot.
+
+For an example of this in action, let us consider the ICH-3 southbridge chipset, for which Intel has a platform design guide that contains reference 
+schematics. In section 5.1.3 (IDSEL to Device number mapping), it says the following:
+
+ - When addressing devices on the external PCI bus (with the PCI slots) the ICH3 will assert one address signal as an IDSEL. When accessing device 0, the 
+ICH3 will assert AD16. When accessing Device 1, the ICH3 will assert AD17. This mapping continues all the way up to device 15 where the ICH3 asserts AD31.
+   
+This tells us how device numbers are mapped to AD lines by the chipset. Let us now look at the board schematics from the platform design guide that 
+will tell us how the IDSEL signals for each PCI slot are connected to AD lines:
+
+![pci-hb-pdg](https://user-images.githubusercontent.com/23404671/222800030-71340425-1756-488f-9931-8c350451a09c.png)
+
+The IDSEL of slot 1, pin A26 in the above schematic, is connected to ```PCI_AD25```, that is ```AD25```. The IDSEL of slot 2 is connected to 
+```PCI_AD26```, that is ```AD26```. From the ICH3 datasheet we know that ```AD25``` and ```AD26``` will be driven when a configuration cycle targeting
+device 9 and 10 is being generated. That means devices connected to slot 1 and slot 2 will be discovered with device numbers 9 and 10 respectively.
+Usually device numbers 0-15 are mapped as such and higher device numbers are decoded to devices internal to the chipset.
+
+The other way to implement the IDSEL signal is to route separate traces on the board, but that is of course not as neat.
